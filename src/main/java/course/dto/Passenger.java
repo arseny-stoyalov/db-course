@@ -13,6 +13,7 @@ import javax.persistence.*;
 public class Passenger {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column
@@ -33,8 +34,8 @@ public class Passenger {
     public Passenger() {
     }
 
-    public Passenger(String name, String surname, Integer passageId, String phoneNumber, Boolean payed) {
-        this.id = Utils.generateIntId();
+    public Passenger(Long id, String name, String surname, Integer passageId, String phoneNumber, Boolean payed) {
+        this.id = id;
         this.name = name;
         this.surname = surname;
         this.passageId = passageId;

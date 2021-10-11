@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
-@Route(value = "passengers")
+@Route
 public class PassengersView extends VerticalLayout {
 
     private final PassengerRepository repo;
@@ -100,7 +100,7 @@ public class PassengersView extends VerticalLayout {
 
         grid.asSingleSelect().addValueChangeListener(e -> editor.editPassenger(e.getValue()));
 
-        addNewBtn.addClickListener(e -> editor.editPassenger(new Passenger("", "", 1, "", false)));
+        addNewBtn.addClickListener(e -> editor.editPassenger(new Passenger(null, "", "", 1, "", false)));
 
         editor.setChangeHandler(() -> {
             String filter = "";
