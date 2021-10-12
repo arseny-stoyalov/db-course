@@ -8,114 +8,132 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import course.passenger.Passenger;
-import course.passenger.PassengerEditor;
-import course.passenger.PassengerRepository;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Route("passages")
 public class PassagesView extends VerticalLayout {
 
-    private final PassengerRepository repo;
+    public final static DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    final course.passenger.PassengerEditor editor;
+    private final PassageRepository repo;
 
-    final Grid<Passenger> grid;
+    final PassageEditor editor;
 
-    final TextField nameFilter;
-    final TextField surnameFilter;
-    final TextField passageIdFilter;
-    final TextField phoneFilter;
-    final TextField payedFilter;
+    final Grid<Passage> grid;
+
+    TextField idFilter;
+    TextField statusIdFilter;
+    TextField scheduleFilter;
+    TextField driverIdFilter;
+    TextField routeIdFilter;
+    TextField busIdFilter;
+    TextField dispatcherIdFilter;
 
     final Button addNewBtn;
 
-    public PassagesView(PassengerRepository repo, PassengerEditor editor) {
+    public PassagesView(PassageRepository repo, PassageEditor editor) {
         this.repo = repo;
         this.editor = editor;
-        this.grid = new Grid<>(Passenger.class);
+        this.grid = new Grid<>();
 
-        this.nameFilter = new TextField();
-        this.surnameFilter = new TextField();
-        this.passageIdFilter = new TextField();
-        this.phoneFilter = new TextField();
-        this.payedFilter = new TextField();
+        this.idFilter = new TextField();
+        this.statusIdFilter = new TextField();
+        this.scheduleFilter = new TextField();
+        this.driverIdFilter = new TextField();
+        this.routeIdFilter = new TextField();
+        this.busIdFilter = new TextField();
+        this.dispatcherIdFilter = new TextField();
 
         this.addNewBtn = new Button("Новый", VaadinIcon.PLUS.create());
 
         HorizontalLayout actions = new HorizontalLayout(
-                nameFilter,
-                surnameFilter,
-                passageIdFilter,
-                phoneFilter,
-                payedFilter,
+                idFilter,
+                statusIdFilter,
+                scheduleFilter,
+                driverIdFilter,
+                routeIdFilter,
+                busIdFilter,
+                dispatcherIdFilter,
                 addNewBtn
         );
         add(actions, grid, editor);
 
         grid.setHeight("300px");
 
-        grid.addColumn(Passenger::getId).setHeader("Код");
-        grid.addColumn(Passenger::getName).setHeader("Имя");
-        grid.addColumn(Passenger::getSurname).setHeader("Фамилия");
-        grid.addColumn(Passenger::getPassageId).setHeader("Код рейса");
-        grid.addColumn(Passenger::getPhoneNumber).setHeader("Номер телефона");
-        grid.addColumn(Passenger::getPayed).setHeader("Оплачено");
+        grid.addColumn(Passage::getId).setHeader("Код");
+        grid.addColumn(Passage::getStatusId).setHeader("Код статуса");
+        grid.addColumn(Passage::getSchedule).setHeader("Время");
+        grid.addColumn(Passage::getDriverId).setHeader("Код водителя");
+        grid.addColumn(Passage::getRouteId).setHeader("Код маршрута");
+        grid.addColumn(Passage::getBusId).setHeader("Код автобуса");
+        grid.addColumn(Passage::getDispatcherId).setHeader("Код диспетчера");
 
-        grid.getColumnByKey("id").setWidth("50px").setFlexGrow(0);
+        idFilter.setPlaceholder("Код");
+        statusIdFilter.setPlaceholder("Код статуса");
+        scheduleFilter.setPlaceholder("Время");
+        driverIdFilter.setPlaceholder("Код водителя");
+        routeIdFilter.setPlaceholder("Код маршрута");
+        busIdFilter.setPlaceholder("Код автобуса");
+        dispatcherIdFilter.setPlaceholder("Код диспетчера");
 
-        nameFilter.setPlaceholder("By name");
-        surnameFilter.setPlaceholder("By surname");
-        passageIdFilter.setPlaceholder("By passageId");
-        phoneFilter.setPlaceholder("By phone");
-        payedFilter.setPlaceholder("By payed");
+        idFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        idFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findById(Long.parseLong(filter)).stream().collect(Collectors.toList()));
+        });
+        statusIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        statusIdFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findByStatusId(Integer.parseInt(filter)));
+        });
+        scheduleFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        scheduleFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findBySchedule(LocalTime.parse(filter, FORMAT)));
+        });
+        driverIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        driverIdFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findByDriverId(Integer.parseInt(filter)));
+        });
+        routeIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        routeIdFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findByRouteId(Integer.parseInt(filter)));
+        });
+        busIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        busIdFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findByBusId(Integer.parseInt(filter)));
+        });
+        dispatcherIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        dispatcherIdFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listPassages(filter, repo.findByDispatcherId(Integer.parseInt(filter)));
+        });
 
-        nameFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        nameFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByNameStartsWithIgnoreCase(filter));
-        });
-        surnameFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        surnameFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findBySurnameStartsWithIgnoreCase(filter));
-        });
-        passageIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        passageIdFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPassageId(Integer.parseInt(filter)));
-        });
-        phoneFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        phoneFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPhoneNumberStartsWithIgnoreCase(filter));
-        });
-        payedFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        payedFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPayed(Boolean.parseBoolean(filter)));
-        });
+        grid.asSingleSelect().addValueChangeListener(e -> editor.editPassage(e.getValue()));
 
-        grid.asSingleSelect().addValueChangeListener(e -> editor.editPassenger(e.getValue()));
-
-        addNewBtn.addClickListener(e -> editor.editPassenger(new Passenger(null, "", "", 1, "", false)));
+        addNewBtn.addClickListener(e -> editor.editPassage(new Passage(null, LocalTime.MIN, 1, 529, "O031YB", 1, 1)));
 
         editor.setChangeHandler(() -> {
-            String filter = "";
             editor.setVisible(false);
-            listPassengers(filter, repo.findBySurnameStartsWithIgnoreCase(filter));
+            listPassages(null, null);
         });
 
-        listPassengers(null, null);
+        listPassages(null, null);
     }
 
-    void listPassengers(String filterText, List<Passenger> passengers) {
+    void listPassages(String filterText, List<Passage> passages) {
         if (StringUtils.isEmpty(filterText)) {
             grid.setItems(repo.findAll());
         } else {
-            grid.setItems(passengers);
+            grid.setItems(passages);
         }
     }
 

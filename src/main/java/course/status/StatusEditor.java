@@ -10,35 +10,35 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
-import course.passenger.Passenger;
-import course.passenger.PassengerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringComponent
 @UIScope
 public class StatusEditor extends VerticalLayout implements KeyNotifier {
 
-    private final PassengerRepository repository;
+    private final StatusRepository repository;
 
-    private Passenger passenger;
+    private Status status;
 
-    TextField name = new TextField("Name");
-    TextField surname = new TextField("Surname");
+    TextField name = new TextField("Название");
+    TextField completeness = new TextField("Прогресс");
+    TextField totalStops = new TextField("Всего остановок");
 
-    Button save = new Button("Save", VaadinIcon.CHECK.create());
-    Button cancel = new Button("Cancel");
-    Button delete = new Button("Delete", VaadinIcon.TRASH.create());
-    HorizontalLayout actions = new HorizontalLayout(save, cancel, delete);
+    Button save = new Button("Сохранить", VaadinIcon.CHECK.create());
+    Button delete = new Button("Удалить", VaadinIcon.TRASH.create());
+    HorizontalLayout actions = new HorizontalLayout(save, delete);
 
-    Binder<Passenger> binder = new Binder<>(Passenger.class);
+    Binder<Status> binder = new Binder<>(Status.class);
     private ChangeHandler changeHandler;
 
     @Autowired
-    public StatusEditor(PassengerRepository repository) {
+    public StatusEditor(StatusRepository repository) {
         this.repository = repository;
 
-        add(name, surname, actions);
+        add(name, completeness, totalStops, actions);
 
+        binder.bind(completeness, p -> p.getCompleteness() + "", (p, v) -> p.setCompleteness(Double.parseDouble(v)));
+        binder.bind(totalStops, p -> p.getTotalStops() + "", (p, v) -> p.setTotalStops(Integer.parseInt(v)));
         binder.bindInstanceFields(this);
 
         setSpacing(true);
@@ -50,17 +50,16 @@ public class StatusEditor extends VerticalLayout implements KeyNotifier {
 
         save.addClickListener(e -> save());
         delete.addClickListener(e -> delete());
-        cancel.addClickListener(e -> editPassenger(passenger));
         setVisible(false);
     }
 
     void delete() {
-        repository.delete(passenger);
+        repository.delete(status);
         changeHandler.onChange();
     }
 
     void save() {
-        repository.save(passenger);
+        repository.save(status);
         changeHandler.onChange();
     }
 
@@ -68,21 +67,20 @@ public class StatusEditor extends VerticalLayout implements KeyNotifier {
         void onChange();
     }
 
-    public final void editPassenger(Passenger c) {
+    public final void editStatus(Status c) {
         if (c == null) {
             setVisible(false);
             return;
         }
         final boolean persisted = c.getId() != null;
         if (persisted) {
-            passenger = repository.findById(c.getId()).get();
+            status = repository.findById(c.getId()).get();
         }
         else {
-            passenger = c;
+            status = c;
         }
-        cancel.setVisible(persisted);
 
-        binder.setBean(passenger);
+        binder.setBean(status);
 
         setVisible(true);
 

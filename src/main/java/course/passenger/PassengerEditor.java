@@ -27,9 +27,8 @@ public class PassengerEditor extends VerticalLayout implements KeyNotifier {
     TextField payed = new TextField("Оплачено");
 
     Button save = new Button("Сохранить", VaadinIcon.CHECK.create());
-    Button cancel = new Button("Отмена");
     Button delete = new Button("Удалить", VaadinIcon.TRASH.create());
-    HorizontalLayout actions = new HorizontalLayout(save, cancel, delete);
+    HorizontalLayout actions = new HorizontalLayout(save, delete);
 
     Binder<Passenger> binder = new Binder<>(Passenger.class);
     private ChangeHandler changeHandler;
@@ -53,7 +52,6 @@ public class PassengerEditor extends VerticalLayout implements KeyNotifier {
 
         save.addClickListener(e -> save());
         delete.addClickListener(e -> delete());
-        cancel.addClickListener(e -> editPassenger(passenger));
         setVisible(false);
     }
 
@@ -83,7 +81,6 @@ public class PassengerEditor extends VerticalLayout implements KeyNotifier {
         else {
             passenger = c;
         }
-        cancel.setVisible(persisted);
 
         binder.setBean(passenger);
 

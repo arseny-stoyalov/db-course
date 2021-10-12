@@ -10,35 +10,34 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
-import course.passenger.Passenger;
-import course.passenger.PassengerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringComponent
 @UIScope
 public class StopRouteEditor extends VerticalLayout implements KeyNotifier {
 
-    private final PassengerRepository repository;
+    private final StopRouteRepository repository;
 
-    private Passenger passenger;
+    private StopRoute stopRoute;
 
-    TextField name = new TextField("Name");
-    TextField surname = new TextField("Surname");
+    TextField routeId = new TextField("Код маршрута");
+    TextField stopId = new TextField("Код остановки");
 
-    Button save = new Button("Save", VaadinIcon.CHECK.create());
-    Button cancel = new Button("Cancel");
-    Button delete = new Button("Delete", VaadinIcon.TRASH.create());
-    HorizontalLayout actions = new HorizontalLayout(save, cancel, delete);
+    Button save = new Button("Сохранить", VaadinIcon.CHECK.create());
+    Button delete = new Button("Удалить", VaadinIcon.TRASH.create());
+    HorizontalLayout actions = new HorizontalLayout(save, delete);
 
-    Binder<Passenger> binder = new Binder<>(Passenger.class);
+    Binder<StopRoute> binder = new Binder<>(StopRoute.class);
     private ChangeHandler changeHandler;
 
     @Autowired
-    public StopRouteEditor(PassengerRepository repository) {
+    public StopRouteEditor(StopRouteRepository repository) {
         this.repository = repository;
 
-        add(name, surname, actions);
+        add(routeId, stopId, actions);
 
+        binder.bind(routeId, p -> p.getRouteId() + "", (p, v) -> p.setRouteId(Integer.parseInt(v)));
+        binder.bind(stopId, p -> p.getStopId() + "", (p, v) -> p.setStopId(Integer.parseInt(v)));
         binder.bindInstanceFields(this);
 
         setSpacing(true);
@@ -50,17 +49,16 @@ public class StopRouteEditor extends VerticalLayout implements KeyNotifier {
 
         save.addClickListener(e -> save());
         delete.addClickListener(e -> delete());
-        cancel.addClickListener(e -> editPassenger(passenger));
         setVisible(false);
     }
 
     void delete() {
-        repository.delete(passenger);
+        repository.delete(stopRoute);
         changeHandler.onChange();
     }
 
     void save() {
-        repository.save(passenger);
+        repository.save(stopRoute);
         changeHandler.onChange();
     }
 
@@ -68,25 +66,23 @@ public class StopRouteEditor extends VerticalLayout implements KeyNotifier {
         void onChange();
     }
 
-    public final void editPassenger(Passenger c) {
+    public final void editStopRoute(StopRoute c) {
         if (c == null) {
             setVisible(false);
             return;
         }
         final boolean persisted = c.getId() != null;
         if (persisted) {
-            passenger = repository.findById(c.getId()).get();
+            stopRoute = repository.findById(c.getId()).get();
         }
         else {
-            passenger = c;
+            stopRoute = c;
         }
-        cancel.setVisible(persisted);
-
-        binder.setBean(passenger);
+        binder.setBean(stopRoute);
 
         setVisible(true);
 
-        name.focus();
+        routeId.focus();
     }
 
     public void setChangeHandler(ChangeHandler h) {

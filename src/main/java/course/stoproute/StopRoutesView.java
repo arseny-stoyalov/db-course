@@ -8,114 +8,88 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import course.passenger.Passenger;
-import course.passenger.PassengerEditor;
-import course.passenger.PassengerRepository;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Route("stoproutes")
 public class StopRoutesView extends VerticalLayout {
 
-    private final PassengerRepository repo;
+    private final StopRouteRepository repo;
 
-    final PassengerEditor editor;
+    final StopRouteEditor editor;
 
-    final Grid<Passenger> grid;
+    final Grid<StopRoute> grid;
 
-    final TextField nameFilter;
-    final TextField surnameFilter;
-    final TextField passageIdFilter;
-    final TextField phoneFilter;
-    final TextField payedFilter;
+    final TextField idFilter;
+    final TextField routeIdFilter;
+    final TextField stopIdFilter;
 
     final Button addNewBtn;
 
-    public StopRoutesView(PassengerRepository repo, PassengerEditor editor) {
+    public StopRoutesView(StopRouteRepository repo, StopRouteEditor editor) {
         this.repo = repo;
         this.editor = editor;
-        this.grid = new Grid<>(Passenger.class);
+        this.grid = new Grid<>();
 
-        this.nameFilter = new TextField();
-        this.surnameFilter = new TextField();
-        this.passageIdFilter = new TextField();
-        this.phoneFilter = new TextField();
-        this.payedFilter = new TextField();
+        this.idFilter = new TextField();
+        this.routeIdFilter = new TextField();
+        this.stopIdFilter = new TextField();
 
         this.addNewBtn = new Button("Новый", VaadinIcon.PLUS.create());
 
         HorizontalLayout actions = new HorizontalLayout(
-                nameFilter,
-                surnameFilter,
-                passageIdFilter,
-                phoneFilter,
-                payedFilter,
+                idFilter,
+                routeIdFilter,
+                stopIdFilter,
                 addNewBtn
         );
         add(actions, grid, editor);
 
         grid.setHeight("300px");
 
-        grid.addColumn(Passenger::getId).setHeader("Код");
-        grid.addColumn(Passenger::getName).setHeader("Имя");
-        grid.addColumn(Passenger::getSurname).setHeader("Фамилия");
-        grid.addColumn(Passenger::getPassageId).setHeader("Код рейса");
-        grid.addColumn(Passenger::getPhoneNumber).setHeader("Номер телефона");
-        grid.addColumn(Passenger::getPayed).setHeader("Оплачено");
+        grid.addColumn(StopRoute::getId).setHeader("Код");
+        grid.addColumn(StopRoute::getRouteId).setHeader("Код маршрута");
+        grid.addColumn(StopRoute::getStopId).setHeader("Код остановки");
 
-        grid.getColumnByKey("id").setWidth("50px").setFlexGrow(0);
+        idFilter.setPlaceholder("Код");
+        routeIdFilter.setPlaceholder("Код маршрута");
+        stopIdFilter.setPlaceholder("Код остановки");
 
-        nameFilter.setPlaceholder("By name");
-        surnameFilter.setPlaceholder("By surname");
-        passageIdFilter.setPlaceholder("By passageId");
-        phoneFilter.setPlaceholder("By phone");
-        payedFilter.setPlaceholder("By payed");
-
-        nameFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        nameFilter.addValueChangeListener(e -> {
+        idFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        idFilter.addValueChangeListener(e -> {
             String filter = e.getValue();
-            listPassengers(filter, repo.findByNameStartsWithIgnoreCase(filter));
+            listStopRoutes(filter, repo.findById(Long.parseLong(filter)).stream().collect(Collectors.toList()));
         });
-        surnameFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        surnameFilter.addValueChangeListener(e -> {
+        routeIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        routeIdFilter.addValueChangeListener(e -> {
             String filter = e.getValue();
-            listPassengers(filter, repo.findBySurnameStartsWithIgnoreCase(filter));
+            listStopRoutes(filter, repo.findByRouteId(Integer.parseInt(filter)));
         });
-        passageIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        passageIdFilter.addValueChangeListener(e -> {
+        stopIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        stopIdFilter.addValueChangeListener(e -> {
             String filter = e.getValue();
-            listPassengers(filter, repo.findByPassageId(Integer.parseInt(filter)));
-        });
-        phoneFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        phoneFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPhoneNumberStartsWithIgnoreCase(filter));
-        });
-        payedFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        payedFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPayed(Boolean.parseBoolean(filter)));
+            listStopRoutes(filter, repo.findByStopId(Integer.parseInt(filter)));
         });
 
-        grid.asSingleSelect().addValueChangeListener(e -> editor.editPassenger(e.getValue()));
+        grid.asSingleSelect().addValueChangeListener(e -> editor.editStopRoute(e.getValue()));
 
-        addNewBtn.addClickListener(e -> editor.editPassenger(new Passenger(null, "", "", 1, "", false)));
+        addNewBtn.addClickListener(e -> editor.editStopRoute(new StopRoute(null, 1, 1)));
 
         editor.setChangeHandler(() -> {
-            String filter = "";
             editor.setVisible(false);
-            listPassengers(filter, repo.findBySurnameStartsWithIgnoreCase(filter));
+            listStopRoutes(null, null);
         });
 
-        listPassengers(null, null);
+        listStopRoutes(null, null);
     }
 
-    void listPassengers(String filterText, List<Passenger> passengers) {
+    void listStopRoutes(String filterText, List<StopRoute> stopRoutes) {
         if (StringUtils.isEmpty(filterText)) {
             grid.setItems(repo.findAll());
         } else {
-            grid.setItems(passengers);
+            grid.setItems(stopRoutes);
         }
     }
 

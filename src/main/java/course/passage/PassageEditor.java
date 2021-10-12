@@ -10,35 +10,48 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
-import course.passenger.Passenger;
-import course.passenger.PassengerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @SpringComponent
 @UIScope
 public class PassageEditor extends VerticalLayout implements KeyNotifier {
 
-    private final PassengerRepository repository;
+    private final PassageRepository repository;
 
-    private Passenger passenger;
+    public final static DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    TextField name = new TextField("Name");
-    TextField surname = new TextField("Surname");
+    public final static Integer ID_LENGTH = 10000;
 
-    Button save = new Button("Save", VaadinIcon.CHECK.create());
-    Button cancel = new Button("Cancel");
-    Button delete = new Button("Delete", VaadinIcon.TRASH.create());
-    HorizontalLayout actions = new HorizontalLayout(save, cancel, delete);
+    private Passage passage;
 
-    Binder<Passenger> binder = new Binder<>(Passenger.class);
+    TextField statusId = new TextField("Код статуса");
+    TextField schedule = new TextField("Время");
+    TextField driverId = new TextField("Код водителя");
+    TextField routeId = new TextField("Код маршрута");
+    TextField busId = new TextField("Код автобуса");
+    TextField dispatcherId = new TextField("Код диспетчера");
+
+    Button save = new Button("Сохранить", VaadinIcon.CHECK.create());
+    Button delete = new Button("Удалить", VaadinIcon.TRASH.create());
+    HorizontalLayout actions = new HorizontalLayout(save, delete);
+
+    Binder<Passage> binder = new Binder<>(Passage.class);
     private ChangeHandler changeHandler;
 
     @Autowired
-    public PassageEditor(PassengerRepository repository) {
+    public PassageEditor(PassageRepository repository) {
         this.repository = repository;
 
-        add(name, surname, actions);
+        add(statusId, schedule, driverId, routeId, busId, dispatcherId, actions);
 
+        binder.bind(statusId, p -> p.getStatusId() + "", (p, s) -> p.setStatusId(Integer.parseInt(s)));
+        binder.bind(schedule, p -> p.getSchedule().format(FORMAT), (p, s) -> p.setSchedule(LocalTime.parse(s, FORMAT)));
+        binder.bind(driverId, p -> p.getDriverId() + "", (p, s) -> p.setDriverId(Integer.parseInt(s)));
+        binder.bind(routeId, p -> p.getRouteId() + "", (p, s) -> p.setRouteId(Integer.parseInt(s)));
+        binder.bind(dispatcherId, p -> p.getDispatcherId() + "", (p, s) -> p.setDispatcherId(Integer.parseInt(s)));
         binder.bindInstanceFields(this);
 
         setSpacing(true);
@@ -50,17 +63,16 @@ public class PassageEditor extends VerticalLayout implements KeyNotifier {
 
         save.addClickListener(e -> save());
         delete.addClickListener(e -> delete());
-        cancel.addClickListener(e -> editPassenger(passenger));
         setVisible(false);
     }
 
     void delete() {
-        repository.delete(passenger);
+        repository.delete(passage);
         changeHandler.onChange();
     }
 
     void save() {
-        repository.save(passenger);
+        repository.save(passage);
         changeHandler.onChange();
     }
 
@@ -68,25 +80,24 @@ public class PassageEditor extends VerticalLayout implements KeyNotifier {
         void onChange();
     }
 
-    public final void editPassenger(Passenger c) {
+    public final void editPassage(Passage c) {
         if (c == null) {
             setVisible(false);
             return;
         }
         final boolean persisted = c.getId() != null;
         if (persisted) {
-            passenger = repository.findById(c.getId()).get();
+            passage = repository.findById(c.getId()).get();
         }
         else {
-            passenger = c;
+            c.setId((long)(Math.random() * ID_LENGTH));
+            passage = c;
         }
-        cancel.setVisible(persisted);
-
-        binder.setBean(passenger);
+        binder.setBean(passage);
 
         setVisible(true);
 
-        name.focus();
+        statusId.focus();
     }
 
     public void setChangeHandler(ChangeHandler h) {

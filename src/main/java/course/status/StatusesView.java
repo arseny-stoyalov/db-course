@@ -8,114 +8,97 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import course.passenger.Passenger;
-import course.passenger.PassengerEditor;
-import course.passenger.PassengerRepository;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Route("statuses")
 public class StatusesView extends VerticalLayout {
 
-    private final PassengerRepository repo;
+    private final StatusRepository repo;
 
-    final course.passenger.PassengerEditor editor;
+    final StatusEditor editor;
 
-    final Grid<Passenger> grid;
+    final Grid<Status> grid;
 
+    final TextField idFilter;
     final TextField nameFilter;
-    final TextField surnameFilter;
-    final TextField passageIdFilter;
-    final TextField phoneFilter;
-    final TextField payedFilter;
+    final TextField completenessFilter;
+    final TextField totalStops;
 
     final Button addNewBtn;
 
-    public StatusesView(PassengerRepository repo, PassengerEditor editor) {
+    public StatusesView(StatusRepository repo, StatusEditor editor) {
         this.repo = repo;
         this.editor = editor;
-        this.grid = new Grid<>(Passenger.class);
+        this.grid = new Grid<>();
 
+        this.idFilter = new TextField();
         this.nameFilter = new TextField();
-        this.surnameFilter = new TextField();
-        this.passageIdFilter = new TextField();
-        this.phoneFilter = new TextField();
-        this.payedFilter = new TextField();
+        this.completenessFilter = new TextField();
+        this.totalStops = new TextField();
 
         this.addNewBtn = new Button("Новый", VaadinIcon.PLUS.create());
 
         HorizontalLayout actions = new HorizontalLayout(
                 nameFilter,
-                surnameFilter,
-                passageIdFilter,
-                phoneFilter,
-                payedFilter,
+                completenessFilter,
+                totalStops,
                 addNewBtn
         );
         add(actions, grid, editor);
 
         grid.setHeight("300px");
 
-        grid.addColumn(Passenger::getId).setHeader("Код");
-        grid.addColumn(Passenger::getName).setHeader("Имя");
-        grid.addColumn(Passenger::getSurname).setHeader("Фамилия");
-        grid.addColumn(Passenger::getPassageId).setHeader("Код рейса");
-        grid.addColumn(Passenger::getPhoneNumber).setHeader("Номер телефона");
-        grid.addColumn(Passenger::getPayed).setHeader("Оплачено");
+        grid.addColumn(Status::getId).setHeader("Код");
+        grid.addColumn(Status::getName).setHeader("Название");
+        grid.addColumn(Status::getCompleteness).setHeader("Прогресс");
+        grid.addColumn(Status::getTotalStops).setHeader("Всего остановок");
 
-        grid.getColumnByKey("id").setWidth("50px").setFlexGrow(0);
+        idFilter.setPlaceholder("Код");
+        nameFilter.setPlaceholder("Название");
+        completenessFilter.setPlaceholder("Прогресс");
+        totalStops.setPlaceholder("Всего остановок");
 
-        nameFilter.setPlaceholder("By name");
-        surnameFilter.setPlaceholder("By surname");
-        passageIdFilter.setPlaceholder("By passageId");
-        phoneFilter.setPlaceholder("By phone");
-        payedFilter.setPlaceholder("By payed");
-
+        idFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        idFilter.addValueChangeListener(e -> {
+            String filter = e.getValue();
+            listStatuses(filter, repo.findById(Long.parseLong(filter)).stream().collect(Collectors.toList()));
+        });
         nameFilter.setValueChangeMode(ValueChangeMode.EAGER);
         nameFilter.addValueChangeListener(e -> {
             String filter = e.getValue();
-            listPassengers(filter, repo.findByNameStartsWithIgnoreCase(filter));
+            listStatuses(filter, repo.findByNameStartsWithIgnoreCase(filter));
         });
-        surnameFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        surnameFilter.addValueChangeListener(e -> {
+        completenessFilter.setValueChangeMode(ValueChangeMode.EAGER);
+        completenessFilter.addValueChangeListener(e -> {
             String filter = e.getValue();
-            listPassengers(filter, repo.findBySurnameStartsWithIgnoreCase(filter));
+            listStatuses(filter, repo.findByCompleteness(Double.parseDouble(filter)));
         });
-        passageIdFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        passageIdFilter.addValueChangeListener(e -> {
+        totalStops.setValueChangeMode(ValueChangeMode.EAGER);
+        totalStops.addValueChangeListener(e -> {
             String filter = e.getValue();
-            listPassengers(filter, repo.findByPassageId(Integer.parseInt(filter)));
-        });
-        phoneFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        phoneFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPhoneNumberStartsWithIgnoreCase(filter));
-        });
-        payedFilter.setValueChangeMode(ValueChangeMode.EAGER);
-        payedFilter.addValueChangeListener(e -> {
-            String filter = e.getValue();
-            listPassengers(filter, repo.findByPayed(Boolean.parseBoolean(filter)));
+            listStatuses(filter, repo.findByTotalStops(Integer.parseInt(filter)));
         });
 
-        grid.asSingleSelect().addValueChangeListener(e -> editor.editPassenger(e.getValue()));
+        grid.asSingleSelect().addValueChangeListener(e -> editor.editStatus(e.getValue()));
 
-        addNewBtn.addClickListener(e -> editor.editPassenger(new Passenger(null, "", "", 1, "", false)));
+        addNewBtn.addClickListener(e -> editor.editStatus(new Status(null, "", 0., 1)));
 
         editor.setChangeHandler(() -> {
-            String filter = "";
             editor.setVisible(false);
-            listPassengers(filter, repo.findBySurnameStartsWithIgnoreCase(filter));
+            listStatuses(null, null);
         });
 
-        listPassengers(null, null);
+        listStatuses(null, null);
     }
 
-    void listPassengers(String filterText, List<Passenger> passengers) {
+    void listStatuses(String filterText, List<Status> statuses) {
         if (StringUtils.isEmpty(filterText)) {
             grid.setItems(repo.findAll());
         } else {
-            grid.setItems(passengers);
+            grid.setItems(statuses);
         }
     }
 

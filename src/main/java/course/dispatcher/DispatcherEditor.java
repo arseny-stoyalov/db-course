@@ -27,9 +27,8 @@ public class DispatcherEditor extends VerticalLayout implements KeyNotifier {
     TextField passageCount = new TextField("Количество рейсов");
 
     Button save = new Button("Сохранить", VaadinIcon.CHECK.create());
-    Button cancel = new Button("Отмена");
     Button delete = new Button("Удалить", VaadinIcon.TRASH.create());
-    HorizontalLayout actions = new HorizontalLayout(save, cancel, delete);
+    HorizontalLayout actions = new HorizontalLayout(save, delete);
 
     Binder<Dispatcher> binder = new Binder<>(Dispatcher.class);
     private ChangeHandler changeHandler;
@@ -38,7 +37,7 @@ public class DispatcherEditor extends VerticalLayout implements KeyNotifier {
     public DispatcherEditor(DispatcherRepository repository) {
         this.repository = repository;
 
-        add(name, surname, actions);
+        add(name, surname, phone, passageCount, actions);
 
         binder.bind(passageCount, d -> d.getPassageCount() + "", (d, v) -> d.setPassageCount(Integer.parseInt(v)));
         binder.bindInstanceFields(this);
@@ -52,7 +51,6 @@ public class DispatcherEditor extends VerticalLayout implements KeyNotifier {
 
         save.addClickListener(e -> save());
         delete.addClickListener(e -> delete());
-        cancel.addClickListener(e -> editDispatcher(dispatcher));
         setVisible(false);
     }
 
@@ -82,7 +80,6 @@ public class DispatcherEditor extends VerticalLayout implements KeyNotifier {
         else {
             dispatcher = c;
         }
-        cancel.setVisible(persisted);
 
         binder.setBean(dispatcher);
 
