@@ -6,13 +6,18 @@ services:
     volumes:
       - .:/code
       - logvolume01:/var/log
+    networks:
+      - db
     links:
       - postgres
   postgres:
     image: postgres
     environment:
       POSTGRES_PASSWORD: henlo
-    ports:
-      - "5001:5432"
 volumes:
   logvolume01: {}
+
+networks:
+  db:
+    name: bridge_db
+    driver: bridge
